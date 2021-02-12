@@ -1,0 +1,142 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openvpn-server
+  labels:
+    app: openvpn-server
+spec:
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openvpn-server
+  template:
+    metadata:
+      labels:
+        app: openvpn-server
+    spec:
+      containers:
+      - name: openvpn-server
+        image: ghcr.io/the-kube-way/openvpn:latest
+        securityContext:
+          readOnlyRootFilesystem: false
+          capabilities:
+            add:
+              - NET_ADMIN
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128M
+          limits:
+            cpu: 800m
+            memory: 256M
+        ports:
+        - containerPort: 1194
+          hostPort: 1194
+          protocol: UDP
+        volumeMounts:
+        - name: openvpn-conf
+          mountPath: /etc/openvpn
+        - name: openvpn-keys
+          mountPath: /etc/openvpn/keys
+        - name: openvpn-ccd
+          mountPath: /etc/openvpn/ccd
+      volumes:
+      - name: openvpn-conf
+        configMap:
+          name: openvpn-server-config
+          items:
+            - key: server1.conf
+              path: server.conf
+            - key: server1_port_forwarding.conf
+              path: port_forwarding.conf
+      - name: openvpn-keys
+        secret:
+          secretName: openvpn-server-keys
+          defaultMode: 0600
+          items:
+            - key: ca.crt
+              path: ca.crt
+            - key: dh.pem
+              path: dh.pem
+            - key: tls.key
+              path: tls.key
+            - key: server1.crt
+              path: server1.crt
+            - key: server1.key
+              path: server1.key
+      - name: openvpn-ccd
+        configMap:
+          name: openvpn-server-ccd
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openvpn-server-config
+  labels:
+    app: openvpn-server
+data:
+  server1_port_forwarding.conf: |
+    # CLIENT_IP PROTO EXPOSED_PORT DEST_PORT
+    10.0.0.42 tcp 8080 80
+
+  server1.conf: |
+    port 1194
+    proto udp
+    dev tun_server1
+
+    ca keys/ca.crt
+    cert keys/server1.crt
+    key keys/server1.key
+    dh keys/dh.pem
+    tls-crypt keys/tls.key
+    #crl-verify crl.pem
+
+    topology subnet
+    server 10.0.0.0 255.255.255.0 nopool
+    ifconfig-pool 10.0.0.0 10.0.0.99 255.255.255.0
+    client-config-dir ccd
+
+    #push "dhcp-option DNS 8.8.8.8"
+
+    #server-ipv6 fc00::/7
+    push "redirect-gateway"
+    client-to-client
+    keepalive 10 30
+    tls-version-min 1.2
+    tls-cipher TLS-DHE-RSA-WITH-AES-256-GCM-SHA384
+    cipher AES-256-GCM
+    compress lz4
+    persist-key
+    persist-tun
+    user nobody
+    group nobody
+    verb 3
+
+    status /run/openvpn_server1.status
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openvpn-server-ccd
+  labels:
+    app: openvpn-server
+data:
+  client1: |
+    ifconfig-push 10.0.0.42 255.255.255.0
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openvpn-server-keys
+  labels:
+    app: openvpn-server
+data:
+  ca.crt: xxx (ca.crt in base64)
+  dh.pem: xxx
+  server1.crt: xxx
+  server1.key: xxx
+  tls.key: xxx

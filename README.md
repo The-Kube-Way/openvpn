@@ -5,6 +5,6 @@
 
 ## Usage
 
-:warnning: This repo contains minimal documentation, so it is intended for advanced users who are familiar with OpenVPN.
+:warning: This repo contains minimal documentation, so it is intended for advanced users who are familiar with OpenVPN.
 
 See <docs/manifests.yaml>

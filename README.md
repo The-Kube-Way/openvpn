@@ -1,6 +1,6 @@
 # OpenVPN on Kubernetes
 
-![Docker](https://github.com/the-kube-way/openvpn/workflows/docker/badge.svg?branch=master)
+![Docker](https://github.com/the-kube-way/openvpn/workflows/Docker/badge.svg?branch=master)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#active)
 
 ## Usage

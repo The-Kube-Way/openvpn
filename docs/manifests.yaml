@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: openvpn-server
-        image: ghcr.io/the-kube-way/openvpn/openvpn:latest
+        image: ghcr.io/the-kube-way/openvpn:latest
         securityContext:
           readOnlyRootFilesystem: false
           capabilities:
